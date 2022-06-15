@@ -1,0 +1,66 @@
+name: Hackademy-Az-TF--CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "App/**"
+      - ".github/**"
+  workflow_dispatch:
+
+jobs:
+  tf-validation:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+        #working-directory: ./Solution
+
+    steps:
+      #- name: Azure authentication
+      #  uses: azure/login@v1
+      #  with:
+      #    creds: ${{ secrets.AZURE_CREDENTIALS  }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+        #with:
+        # terraform_version: 0.13.0
+        # cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Terraform Format
+        id: fmt
+        run: terraform fmt -check
+
+      - name: Terraform Init
+        id: init
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID  }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET  }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID  }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID  }}
+        run: terraform init
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      # - name: Terraform Plan
+      #   id: plan
+      #   env:
+      #    ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID  }}
+      #    ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET  }}
+      #    ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID  }}
+      #    ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID  }}
+      #   run: terraform plan
+
+#      - name: Invoke 'Hackademy-Az-TF--CD' workflow for CD
+#        uses: benc-uk/workflow-dispatch@v1
+#        with:
+#          workflow: Hackademy-Az-TF--CD
+#          #Este token hay que crearlo no es un secreto del workflow, leer: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
+#          token: ${{ secrets.ACTIONS_PAT }}
+#          #inputs: '{ "reason": "Fired by Hackademy-Az-TF--CI Worflow.", "imagetag":"${{github.run_number}}" }'
